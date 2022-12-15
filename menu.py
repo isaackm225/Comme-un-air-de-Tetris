@@ -3,35 +3,35 @@ import game
 import random
 import os
 
-#initializing pygame
+#initializing pygame and music
 pygame.init()
 music = 'arcade_music.mp3'
 pygame.mixer.music.load(music)
-#pygame.mixer.music.play(loops=-1)
+pygame.mixer.music.play(loops=-1)
 
-#create game window size
+#initializing the grid and score tracker
 grid = game.Grid()
-#store them in constante
-SCREEN_WIDTH = 1000 # added 200 pixel for score tracking and next shape display
+#score = game.Score()
+
+# game window dimensions
+SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 800
 SCREEN_DIMENSION = (SCREEN_WIDTH,SCREEN_HEIGHT)
 
-play_width = 600
-play_height = 600
+#inside window create grid dimensions
+play_width = 630
+play_height = 630
 PLAY_DIMENSION = (play_width,play_height)
-
 block_size = 30
-
 top_left_x = (SCREEN_WIDTH-play_width)//2
 top_left_y = (SCREEN_HEIGHT - play_height) //2
-#top_left= (top_left_x, top_left_y)
 top_left=(100,100)
 
 #creating window
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT)) #win or surface
 pygame.display.set_caption("Main Menu")
 
-#game variables
+#game modes & states
 game_modes = {"main_menu":0, "game":1, "pause":2,"game_select":3, 'map_select':4}
 game_mode = game_modes["main_menu"]
 menu_states = {"pause_menu":0, "options":1, "v_settings":2, "a_settings":3, "key_bindings":4}
@@ -40,12 +40,15 @@ menu_state = menu_states["pause_menu"]
 #define fonts
 #fonts are available in the fonts folder. edit following line to change fonts
 font = pygame.font.Font(r".\fonts\Minecrafter.Reg.ttf", 40)
+small_font = pygame.font.SysFont("comicsans", 15)
 
-#define colours: white
-TEXT_COL = (204, 251, 229)
+#define colours
+TEXT_COL = (204, 251, 229)  #offset of white
+BG_COLOR = (0, 81, 182) #blue background
 
 #load button images
 #button image are found in images folder. download images there and edit following lines to change images
+#TODO: Build function for mixing or muting audio / changing background fill
 resume_img = pygame.image.load("images/button_resume.png").convert_alpha()
 options_img = pygame.image.load("images/button_options.png").convert_alpha()
 quit_img = pygame.image.load("images/button_quit.png").convert_alpha()
@@ -59,9 +62,9 @@ back_img = pygame.image.load('images/button_back.png').convert_alpha()
 resume_button = game.Button((SCREEN_WIDTH//2)-100, (SCREEN_HEIGHT//2)-200, resume_img, 1)
 options_button = game.Button((SCREEN_WIDTH//2)-110, (SCREEN_HEIGHT//2)-100, options_img, 1)
 quit_button = game.Button((SCREEN_WIDTH//2)-70, SCREEN_HEIGHT//2, quit_img, 1)
-video_button = game.Button((SCREEN_WIDTH//2)-200, (SCREEN_HEIGHT//2)-200, video_img, 1)
-audio_button = game.Button((SCREEN_WIDTH//2)-200, (SCREEN_HEIGHT//2)-100, audio_img, 1)
-keys_button = game.Button((SCREEN_WIDTH//2)-175, (SCREEN_HEIGHT//2), keys_img, 1)
+#video_button = game.Button((SCREEN_WIDTH//2)-200, (SCREEN_HEIGHT//2)-200, video_img, 1)
+#audio_button = game.Button((SCREEN_WIDTH//2)-200, (SCREEN_HEIGHT//2)-100, audio_img, 1)
+#keys_button = game.Button((SCREEN_WIDTH//2)-175, (SCREEN_HEIGHT//2), keys_img, 1)
 back_button = game.Button((SCREEN_WIDTH//2)-100, (SCREEN_HEIGHT//2)+100, back_img, 1)
 
 def draw_text(text, font, text_col, x, y):
@@ -119,13 +122,16 @@ def place_piece(grid,piece):
       #print(f'k:{k}')
       if block == '0':
         col,row,available,occupied = grid.game_grid[sy][sx]
-        if available:
+        if available and not occupied:
           occupied = True
           grid.game_grid[sy][sx] = col,row,available,occupied
           #print(grid.game_grid[sy][sx])
           #print(sx)
           #print(sy)
           #print(grid.game_grid[sx][sy])
+        else:
+          pass
+
       sx = (piece.x-50)//30
     sy= (piece.y-100)//30
     #print(sy)
@@ -156,7 +162,7 @@ tries = 3
 #game loop
 run = True
 while run:
-  screen.fill((0, 81, 182))
+  screen.fill(BG_COLOR)
 
   #check if game is paused
   if game_mode == game_modes["pause"]:
@@ -186,6 +192,7 @@ while run:
       
   elif game_mode == game_modes["game"]:
     grid.refresh_grid(screen, block_size, top_left)
+    #draw_text(f"SCORE: {score.score}",pygame.font.SysFont('comicsans',15),TEXT_COL,SCREEN_WIDTH//4 + 500,SCREEN_HEIGHT//2+30)
     grid.draw_grid(screen,21,21,top_left,PLAY_DIMENSION,block_size)
     if map == 'triangle':
       grid.draw_triangle()
@@ -196,10 +203,10 @@ while run:
     else:
       raise "Couldnt choose map"
     grid.draw_map(screen,block_size,top_left)
-    clock = pygame.time.Clock()
     draw_next_shapes(next_piece, screen)
     if current_piece:
       spawn_piece(current_piece,screen)
+      placing_piece_prompt(current_piece)
       placing_piece_prompt(current_piece)
 
 

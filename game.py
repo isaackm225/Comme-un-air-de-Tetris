@@ -139,7 +139,8 @@ SHAPES=[S,Z,I,O,J,L,T]
 
 class Grid():
     def __init__(self, x_size=MAX_X_SIZE, y_size=MAX_Y_SIZE) -> None:
-        self.game_grid = [[(UPPERCASE_LETTER[y],LOWERCASE_LETTER[x],False,False) for x in range(MAX_X_SIZE)] for y in range(MAX_Y_SIZE)] 
+        self.game_grid = [[(UPPERCASE_LETTER[y],LOWERCASE_LETTER[x],False,False) for x in range(MAX_X_SIZE)] for y in range(MAX_Y_SIZE)]
+        self.score = 0 
         #print(self.game_grid)#each cell in the grid is represented with a tuple, x-coordinate, y-coordinate, availability as bool value
 
     def refresh_grid(self,screen,block_size,top_left):
@@ -148,15 +149,44 @@ class Grid():
             complete_row = {}
             for j,cell in enumerate(row):
                 x,y,a,o = cell
-                complete_row.setdefault(cell,a or o)
+                complete_row.setdefault(cell,(a and o) or (not a))
                 #print(cell)
                 if o: 
                     pygame.draw.rect(screen,(0,0,0),(sx+block_size*j,sy+block_size*i,block_size,block_size))
                     #print(cell)
-                
                 else:
-                    pass
-                    #print('_',end='')
+                    pygame.draw.rect(screen,(0, 81, 182),(sx+block_size*j,sy+block_size*i,block_size,block_size))
+            if all(complete_row.values()):
+                self.clear_row(i)
+                self.score += len(row)*1000
+        
+    def clear_row(self,row_index):
+        for i,row in enumerate(self.game_grid):
+            for j,cell in enumerate(row):
+                x1,y1,a1,o1 = cell
+                lower_cell = self.game_grid[i-1][j]
+                if i==row_index:
+                    o1 = False
+                cell_to_clear = x1,y1,a1,o1            
+                self.game_grid[row_index][i] = cell_to_clear
+        self.fall(row_index)
+
+    def fall(self,row_index):
+        for i,row in list(enumerate(self.game_grid[:row_index+1]))[::-1]:
+                for j,cell in enumerate(row):
+                    if i > row_index:
+                        try:
+                            upper_row = row[i+1]
+                            x2,y2,a2,o2 = upper_row[j]
+                            x1,y1,a1,o1 = cell
+                            cell = x1,y1,a2,o2            
+                            self.game_grid[i][j] = cell
+                        except:
+                            x1,y1,a1,o1 = cell
+                            cell = x1,y1,True,False            
+                            self.game_grid[i][j] = cell
+
+
     def draw_map(self,screen,block_size,top_left):
         sx,sy = top_left
         for i,row in enumerate(self.game_grid):
